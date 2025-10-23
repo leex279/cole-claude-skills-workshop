@@ -266,6 +266,90 @@ my-project/
 
 ---
 
+## Installing Skills
+
+There are two main sources for ready-to-use skills: **Anthropic's Official Skills** and **Community Skills**.
+
+---
+
+## Official Skills from Anthropic
+
+Anthropic maintains an official repository of example skills at [github.com/anthropics/skills](https://github.com/anthropics/skills). These are professionally maintained skills covering common use cases.
+
+### Available Official Skill Categories
+
+**Creative & Design:**
+- **algorithmic-art**: Generative art using p5.js
+- **canvas-design**: Visual art in PNG/PDF formats
+- **slack-gif-creator**: Animated GIFs optimized for Slack
+
+**Development & Technical:**
+- **artifacts-builder**: HTML artifacts with React and Tailwind CSS
+- **mcp-builder**: MCP server creation guidance
+- **webapp-testing**: Web application testing using Playwright
+
+**Enterprise & Communication:**
+- **brand-guidelines**: Anthropic brand application
+- **internal-comms**: Status reports, newsletters, FAQs
+- **theme-factory**: Professional styling themes
+
+**Meta Skills:**
+- **skill-creator**: Guidance for building new skills
+- **template-skill**: Starting template for custom skills
+
+**Document Skills:**
+Located in `document-skills/` subdirectory:
+- **DOCX**: Word document manipulation
+- **PDF**: PDF processing and creation
+- **PPTX**: PowerPoint presentation handling
+- **XLSX**: Excel spreadsheet operations
+
+### Installing Official Skills in Claude Code
+
+**Method 1: Register the Official Marketplace Plugin**
+
+First, register Anthropic's skills repository as a marketplace plugin:
+
+```bash
+/plugin marketplace add anthropics/skills
+```
+
+Then browse and install skill sets through the interface, or install directly:
+
+```bash
+# Install document skills
+/plugin install document-skills@anthropic-agent-skills
+
+# Install example skills (creative, development, enterprise)
+/plugin install example-skills@anthropic-agent-skills
+```
+
+**Method 2: Manual Installation**
+
+Alternatively, clone individual skills from the repository:
+
+```bash
+# Navigate to your project's skills directory
+cd .claude/skills/
+
+# Clone a specific skill (example: algorithmic-art)
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/anthropics/skills.git temp-skills
+
+cd temp-skills
+git sparse-checkout set example-skills/algorithmic-art
+cp -r example-skills/algorithmic-art ../
+cd ..
+rm -rf temp-skills
+```
+
+### Licensing Note
+
+- Most official skills are **Apache 2.0 licensed** (fully open source)
+- Document skills are **source-available** (can view and modify, but check license for distribution terms)
+
+---
+
 ## Installing Skills from the Community
 
 The Claude Code community has created a growing library of ready-to-use skills that you can install with a single command. Visit [aitmpl.com/skills](https://www.aitmpl.com/skills) to browse available skills.
