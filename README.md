@@ -17,7 +17,7 @@ Welcome to the Claude Code Skills showcase! This project provides a hands-on int
 
 ### Key Characteristics
 
-- **Model-Invoked**: Claude automatically decides when to use a skill based on context (unlike slash commands which you manually trigger)
+- **Model-Invoked**: Claude automatically decides when to use a skill based on context (unlike slash commands which you manually trigger). This mentioned, if not doing automatically, just mention the usage of skill xyz.
 - **Modular**: Each skill is a self-contained folder with instructions and resources
 - **Shareable**: Skills can be shared via git with your team or community
 - **Composable**: Multiple skills can work together to handle complex tasks
@@ -335,3 +335,4 @@ Once installed, skills are stored in your `.claude/skills/` directory. You can:
 - **Browse categories**: Visit aitmpl.com/skills and filter by Development, Document Processing, Creative Design, or Enterprise Communication
 
 ---
+
