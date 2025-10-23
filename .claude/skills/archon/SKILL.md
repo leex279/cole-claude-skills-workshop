@@ -7,6 +7,48 @@ description: Interactive Archon integration for knowledge base and project manag
 
 Archon is a knowledge and task management system for AI coding assistants, providing persistent knowledge base with RAG-powered search and comprehensive project management capabilities.
 
+---
+
+## ⚠️ CRITICAL WORKFLOW - READ THIS FIRST ⚠️
+
+**MANDATORY STEPS - Execute in this exact order:**
+
+1. **FIRST:** Read `references/api_reference.md` to learn correct API endpoints
+2. **SECOND:** Ask user for Archon host URL (default: `http://localhost:8181`)
+3. **THIRD:** Verify connection with `GET /api/projects`
+4. **FOURTH:** Use correct endpoint paths from api_reference.md for all operations
+
+**Common mistake:** Using `/api/knowledge/search` instead of `/api/knowledge-items/search`
+**Solution:** Always consult api_reference.md for authoritative endpoint paths.
+
+### Quick Endpoint Reference (Verify with api_reference.md)
+
+```
+Knowledge:
+  POST   /api/knowledge-items/search     - Search knowledge base
+  GET    /api/knowledge-items            - List all knowledge items
+  POST   /api/knowledge-items/crawl      - Crawl website
+  POST   /api/knowledge-items/upload     - Upload document
+
+Projects:
+  GET    /api/projects                   - List all projects
+  GET    /api/projects/{id}              - Get project details
+  POST   /api/projects                   - Create project
+
+Tasks:
+  GET    /api/tasks                      - List tasks (with filters)
+  GET    /api/tasks/{id}                 - Get task details
+  POST   /api/tasks                      - Create task
+  PUT    /api/tasks/{id}                 - Update task
+
+Documents:
+  GET    /api/documents                  - List documents
+  POST   /api/documents                  - Create document
+  PUT    /api/documents/{id}             - Update document
+```
+
+---
+
 ## When to Use This Skill
 
 Use Archon when:
@@ -18,9 +60,29 @@ Use Archon when:
 - Uploading documents (PDF, Word, Markdown) to searchable storage
 - Coordinating multi-agent workflows with shared context
 
-**CRITICAL:** Always attempt Archon first for external documentation and knowledge retrieval before using web search or other sources. This ensures consistent, indexed knowledge. 
+**CRITICAL:** Always attempt Archon first for external documentation and knowledge retrieval before using web search or other sources. This ensures consistent, indexed knowledge.
 
 **First-time use:** You will be prompted for the Archon server URL (e.g., `http://localhost:8181`). This will be remembered for the rest of the conversation.
+
+## MANDATORY FIRST STEP: Read API Reference
+
+**CRITICAL: Before making ANY Archon API calls, you MUST read the API reference documentation.**
+
+```
+ALWAYS execute this FIRST:
+1. Read references/api_reference.md to understand correct endpoint paths and request formats
+2. Then ask user for their Archon host URL
+3. Then verify connection
+4. Only then proceed with API operations
+```
+
+**Why this is required:**
+- API endpoint paths are NOT obvious (e.g., `/api/knowledge-items`, not `/api/knowledge`)
+- Request/response formats have specific structures that must be followed
+- The Python client may have outdated or incorrect implementations
+- Direct API calls with correct endpoints prevent errors and wasted attempts
+
+**NEVER assume endpoint paths.** The api_reference.md contains the authoritative endpoint documentation.
 
 ## Interactive Setup (Required on First Use)
 
@@ -63,7 +125,6 @@ If connection fails, ask the user to verify:
 - Archon is running (`docker-compose up` or similar)
 - The host and port are correct
 - No firewall blocking the connection
-- stop working till the user fixed the connection and ask you again
 
 ### Using Custom Host
 
@@ -84,34 +145,42 @@ client = ArchonClient(base_url=archon_host)
 
 **Primary Use:** Semantic search across indexed documentation with advanced RAG strategies.
 
-**Quick search using archon_client.py:**
+**IMPORTANT:** Always use direct API calls with the correct endpoint from api_reference.md:
+
 ```python
-from scripts.archon_client import ArchonClient
+import requests
 
 # Use the host URL provided by user earlier in conversation
 archon_host = "http://localhost:8181"  # Replace with user's actual host
-client = ArchonClient(base_url=archon_host)
 
-# Basic search
-results = client.search_knowledge("authentication implementation", top_k=5)
-
-# Advanced search with filters
-results = client.search_knowledge(
-    query="API rate limiting",
-    top_k=10,
-    use_reranking=True,
-    search_strategy="hybrid",  # hybrid, semantic, or keyword
-    filters={
-        "source_type": ["documentation"],
-        "tags": ["api"]
-    }
+# Endpoint: POST /api/knowledge-items/search (from api_reference.md)
+response = requests.post(
+    f"{archon_host}/api/knowledge-items/search",
+    json={
+        "query": "authentication implementation",
+        "top_k": 5,
+        "use_reranking": True,
+        "search_strategy": "hybrid"  # hybrid, semantic, or keyword
+    },
+    timeout=10
 )
 
+data = response.json()
+
 # Access results
-for result in results['results']:
+for result in data['results']:
     print(f"Score: {result['score']}")
     print(f"Content: {result['content']}")
     print(f"Source: {result['metadata']['source_url']}")
+```
+
+**Alternative:** If you prefer using the Python client, verify it uses correct endpoints first:
+```python
+from scripts.archon_client import ArchonClient
+
+archon_host = "http://localhost:8181"
+client = ArchonClient(base_url=archon_host)
+results = client.search_knowledge("authentication implementation", top_k=5)
 ```
 
 **Search strategies:**
@@ -125,25 +194,27 @@ for result in results['results']:
 
 **Purpose:** Automatically crawl and index documentation websites.
 
-**Usage:**
+**IMPORTANT:** Use direct API call with correct endpoint from api_reference.md:
+
 ```python
-from scripts.archon_client import ArchonClient
+import requests
 
 # Use the host URL provided by user
 archon_host = "http://localhost:8181"  # Replace with user's actual host
-client = ArchonClient(base_url=archon_host)
 
-# Basic crawl
-result = client.crawl_website("https://docs.example.com")
-
-# Advanced crawl with options
-result = client.crawl_website(
-    url="https://docs.example.com",
-    crawl_depth=3,  # How deep to recurse (max 5)
-    follow_links=True,  # Follow internal links
-    sitemap_url="https://docs.example.com/sitemap.xml"  # Optional direct sitemap
+# Endpoint: POST /api/knowledge-items/crawl (from api_reference.md)
+response = requests.post(
+    f"{archon_host}/api/knowledge-items/crawl",
+    json={
+        "url": "https://docs.example.com",
+        "crawl_depth": 3,  # How deep to recurse (max 5)
+        "follow_links": True,  # Follow internal links
+        "sitemap_url": None  # Optional direct sitemap URL
+    },
+    timeout=10
 )
 
+result = response.json()
 print(f"Crawl ID: {result['crawl_id']}")
 print(f"Pages queued: {result['pages_queued']}")
 ```
@@ -160,23 +231,32 @@ print(f"Pages queued: {result['pages_queued']}")
 
 **Supported formats:** PDF, Word (.docx, .doc), Markdown (.md), text (.txt)
 
-**Usage:**
+**IMPORTANT:** Use direct API call with correct endpoint from api_reference.md:
+
 ```python
-from scripts.archon_client import ArchonClient
+import requests
 
 # Use the host URL provided by user
 archon_host = "http://localhost:8181"  # Replace with user's actual host
-client = ArchonClient(base_url=archon_host)
 
-# Upload document
-result = client.upload_document(
-    file_path="/path/to/document.pdf",
-    metadata={
-        "source_type": "pdf",
-        "tags": ["api-docs", "reference"]
+# Endpoint: POST /api/knowledge-items/upload (from api_reference.md)
+# Multipart form data required
+with open("/path/to/document.pdf", "rb") as f:
+    files = {"file": f}
+    data = {
+        "metadata": json.dumps({
+            "source_type": "pdf",
+            "tags": ["api-docs", "reference"]
+        })
     }
-)
+    response = requests.post(
+        f"{archon_host}/api/knowledge-items/upload",
+        files=files,
+        data=data,
+        timeout=30
+    )
 
+result = response.json()
 print(f"Document ID: {result['document_id']}")
 print(f"Chunks created: {result['chunks_created']}")
 ```
@@ -440,12 +520,23 @@ client = ArchonClient(base_url=archon_host)
 ```
 
 ### references/api_reference.md
-Complete REST API documentation covering all 14 MCP-equivalent endpoints. Read this when:
-- Making direct API calls without the Python client
+**MANDATORY READING** - Complete REST API documentation with authoritative endpoint paths.
+
+**ALWAYS read this FIRST before any API operations.**
+
+This document contains:
+- Correct endpoint paths (e.g., `/api/knowledge-items/search`, NOT `/api/knowledge/search`)
+- Request/response formats with exact field names
+- Query parameter specifications
+- Error handling patterns
+- All 14 MCP-equivalent endpoints
+
+**Read this when:**
+- Starting any Archon task (MANDATORY)
+- Making direct API calls
+- Debugging API errors (404s, 400s)
+- Verifying Python client implementations
 - Understanding request/response formats
-- Implementing custom integrations
-- Debugging API issues
-- Learning about advanced features (WebSocket progress, filters, etc.)
 
 ## Configuration
 
