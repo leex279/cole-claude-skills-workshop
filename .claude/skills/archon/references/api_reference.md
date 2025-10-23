@@ -178,6 +178,69 @@ metadata: {
 }
 ```
 
+### Get RAG Sources
+
+**Endpoint:** `GET /api/rag/sources`
+
+**Purpose:** Get list of all available knowledge sources in the RAG system.
+
+**⚠️ LIMITATION:** This endpoint returns LIMITED metadata. For full metadata including word count, code examples count, and estimated pages, use `GET /api/knowledge-items` instead.
+
+**Response:**
+```json
+{
+  "sources": [
+    {
+      "source_id": "source-uuid",
+      "title": "Next.js Documentation",
+      "summary": "Documentation for Next.js framework...",
+      "metadata": {
+        "source_type": "documentation"
+      },
+      "total_words": 245000,
+      "created_at": "2025-10-15T10:00:00Z",
+      "updated_at": "2025-10-21T10:00:00Z"
+    }
+  ],
+  "count": 15
+}
+```
+
+**Missing from this endpoint:** `word_count`, `code_examples_count`, `estimated_pages`, detailed `metadata` object.
+
+**Recommended:** Use `GET /api/knowledge-items` for complete metadata (see above).
+
+### Get Database Metrics
+
+**Endpoint:** `GET /api/database/metrics`
+
+**Purpose:** Get database metrics including total documents, chunks, code examples, and other statistics.
+
+**Response:**
+```json
+{
+  "total_documents": 150,
+  "total_chunks": 3450,
+  "total_code_examples": 287,
+  "sources_by_type": {
+    "documentation": 85,
+    "pdf": 35,
+    "code": 20,
+    "markdown": 10
+  },
+  "total_projects": 12,
+  "total_tasks": 145,
+  "storage_size_mb": 512.5,
+  "last_updated": "2025-10-21T10:30:00Z"
+}
+```
+
+### ⚠️ Deprecated Endpoints
+
+**Endpoint:** `GET /api/knowledge-items/sources` (DEPRECATED)
+
+**Status:** This endpoint is deprecated and returns an empty array. Use `GET /api/rag/sources` instead for listing all available sources.
+
 ## Project Management Endpoints
 
 ### List Projects

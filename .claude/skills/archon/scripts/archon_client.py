@@ -71,7 +71,7 @@ class ArchonClient:
         source_type: Optional[str] = None
     ) -> Dict:
         """List all knowledge base items
-        
+
         Args:
             limit: Maximum results (default: 50)
             offset: Pagination offset (default: 0)
@@ -81,6 +81,22 @@ class ArchonClient:
         if source_type:
             params["source_type"] = source_type
         return self._request("GET", "/api/knowledge-items", params=params)
+
+    def get_rag_sources(self) -> Dict:
+        """Get list of all available RAG sources
+
+        Returns:
+            Dictionary containing list of sources with metadata
+        """
+        return self._request("GET", "/api/rag/sources")
+
+    def get_database_metrics(self) -> Dict:
+        """Get database metrics and statistics
+
+        Returns:
+            Dictionary containing total documents, chunks, code examples, etc.
+        """
+        return self._request("GET", "/api/database/metrics")
     
     def crawl_website(
         self,

@@ -29,6 +29,8 @@ Knowledge:
   GET    /api/knowledge-items            - List all knowledge items
   POST   /api/knowledge-items/crawl      - Crawl website
   POST   /api/knowledge-items/upload     - Upload document
+  GET    /api/rag/sources                - Get all RAG sources
+  GET    /api/database/metrics           - Get database metrics
 
 Projects:
   GET    /api/projects                   - List all projects
@@ -45,6 +47,9 @@ Documents:
   GET    /api/documents                  - List documents
   POST   /api/documents                  - Create document
   PUT    /api/documents/{id}             - Update document
+
+Deprecated:
+  GET    /api/knowledge-items/sources    - Use /api/rag/sources instead
 ```
 
 ---
@@ -101,24 +106,31 @@ Store the user's response for all subsequent API calls in this conversation.
 
 ### Connection Verification
 
-After receiving the host URL, verify the connection:
+After receiving the host URL, verify the connection using the helper script:
+
+```bash
+# Use the provided helper script to verify connection and list knowledge
+cd .claude/skills/archon/scripts
+python3 list_knowledge.py http://localhost:8181
+```
+
+Or use the Python client directly:
 
 ```python
-import requests
+import sys
+sys.path.insert(0, '.claude/skills/archon/scripts')
+from archon_client import ArchonClient
 
 archon_host = "http://localhost:8181"  # Use the URL provided by user
+client = ArchonClient(base_url=archon_host)
 
-try:
-    response = requests.get(f"{archon_host}/api/projects", timeout=5)
-    if response.status_code == 200:
-        print(f"✓ Connected to Archon at {archon_host}")
-    else:
-        print(f"⚠ Archon responded with status {response.status_code}")
-except requests.exceptions.ConnectionError:
-    print(f"✗ Cannot connect to Archon at {archon_host}")
-    print("Please check that Archon is running and the URL is correct.")
-except Exception as e:
-    print(f"✗ Connection error: {e}")
+# Verify connection
+projects = client.list_projects()
+if projects.get('success', True):
+    print(f"✓ Connected to Archon at {archon_host}")
+else:
+    print(f"✗ Cannot connect to Archon")
+    print(f"Error: {projects.get('error')}")
 ```
 
 If connection fails, ask the user to verify:
@@ -137,6 +149,58 @@ from scripts.archon_client import ArchonClient
 archon_host = "http://192.168.1.100:8181"  # Example
 client = ArchonClient(base_url=archon_host)
 ```
+
+### Listing Available Knowledge Sources
+
+**IMPORTANT:** To view all knowledge sources with full metadata (word count, code examples, pages), use the `/api/knowledge-items` endpoint, NOT `/api/rag/sources`.
+
+**Recommended approach - Use the helper script:**
+```python
+# Run the list_knowledge.py script to see full metadata
+import subprocess
+subprocess.run(["python3", "scripts/list_knowledge.py", archon_host])
+```
+
+**Alternative - Direct API call with full metadata:**
+```python
+import requests
+
+archon_host = "http://localhost:8181"  # Use user's actual host
+response = requests.get(f"{archon_host}/api/knowledge-items", timeout=10)
+data = response.json()
+
+for item in data['items']:
+    meta = item['metadata']
+    print(f"Title: {item['title']}")
+    print(f"  Type: {item['source_type']}")
+    print(f"  URL: {item['url']}")
+    print(f"  Content: {meta['word_count']:,} words (~{meta['estimated_pages']:.1f} pages)")
+    print(f"  Code Examples: {meta['code_examples_count']:,}")
+    print(f"  Last Updated: {meta['last_scraped'][:10]}")
+    print()
+```
+
+**Using the Python client:**
+```python
+from scripts.archon_client import ArchonClient
+
+archon_host = "http://localhost:8181"  # Use user's actual host
+client = ArchonClient(base_url=archon_host)
+
+# Get full knowledge items list with metadata
+result = client.list_knowledge_items(limit=100)
+items = result.get('items', [])
+
+# Calculate totals
+total_words = sum(item['metadata']['word_count'] for item in items)
+total_code = sum(item['metadata']['code_examples_count'] for item in items)
+
+print(f"Total: {len(items)} sources")
+print(f"Content: {total_words:,} words")
+print(f"Code Examples: {total_code:,}")
+```
+
+**Note:** The `/api/rag/sources` endpoint exists but returns limited metadata (no word counts, code example counts, or page estimates). Always use `/api/knowledge-items` for complete information.
 
 
 ## Core Capabilities
@@ -512,12 +576,30 @@ Complete Python client for all Archon API endpoints. Provides the `ArchonClient`
 
 **Import and use with user-provided host:**
 ```python
-from scripts.archon_client import ArchonClient
+import sys
+sys.path.insert(0, '.claude/skills/archon/scripts')
+from archon_client import ArchonClient
 
 # Always use the host URL obtained from the user
 archon_host = "http://localhost:8181"  # Replace with user's actual host
 client = ArchonClient(base_url=archon_host)
 ```
+
+### scripts/list_knowledge.py
+Helper script to quickly list all knowledge base items with connection verification.
+
+**Usage:**
+```bash
+cd .claude/skills/archon/scripts
+python3 list_knowledge.py                      # Uses default localhost:8181
+python3 list_knowledge.py http://192.168.1.100:8181  # Custom host
+```
+
+**Output:**
+- Connection status
+- Total knowledge items count
+- Items grouped by source type
+- Detailed list with titles, types, chunks, and source URLs
 
 ### references/api_reference.md
 **MANDATORY READING** - Complete REST API documentation with authoritative endpoint paths.
